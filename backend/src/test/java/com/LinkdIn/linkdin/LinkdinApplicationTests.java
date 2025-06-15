@@ -1,4 +1,4 @@
-package com.LinkdIn.linkdin;
+package com.Linkdin.linkdin;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

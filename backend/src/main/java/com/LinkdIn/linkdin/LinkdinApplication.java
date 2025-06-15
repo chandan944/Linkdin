@@ -1,4 +1,4 @@
-package com.LinkdIn.linkdin;
+package com.Linkdin.linkdin;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
