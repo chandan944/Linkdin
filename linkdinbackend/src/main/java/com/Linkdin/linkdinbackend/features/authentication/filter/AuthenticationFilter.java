@@ -1,6 +1,6 @@
 package com.Linkdin.linkdinbackend.features.authentication.filter;
 
-import com.Linkdin.linkdinbackend.features.authentication.model.User;
+import com.Linkdin.linkdinbackend.features.authentication.model.AuthenticationUser;
 import com.Linkdin.linkdinbackend.features.authentication.service.AuthenticationService;
 import com.Linkdin.linkdinbackend.features.authentication.utils.JsonWebToken;
 import jakarta.servlet.FilterChain;
@@ -62,7 +62,7 @@ public class AuthenticationFilter extends HttpFilter {
             }
 
             String email = jsonWebTokenService.getEmailFromToken(token);
-            User user = authenticationService.getUser(email);
+            AuthenticationUser user = authenticationService.getUser(email);
             request.setAttribute("authenticatedUser", user);
             chain.doFilter(request, response);
         } catch (Exception e) {

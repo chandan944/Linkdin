@@ -1,19 +1,21 @@
-import { FormEvent, useState } from "react";
+import {  useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-
 import classes from "./Signup.module.scss";
 import { useAuthentication } from "../../context/AuthenticationContextProvider";
-import Layout from "../../components/layout/Layout";
+import { usePageTitle } from "../../../../hook/usePageTitle";
 import Box from "../../components/box/Box";
-import { Input } from "../../../../components/input/Input";
 import { Button } from "../../../../components/button/Button";
 import { Seperator } from "../../../../components/seprator/Seperator";
+import { Input } from "../../../../components/input/Input";
+
 
 export function Signup() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { signup } = useAuthentication();
   const navigate = useNavigate();
+  usePageTitle("Signup");
+
   const doSignup = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
@@ -33,10 +35,8 @@ export function Signup() {
     }
   };
   return (
-    <Layout>
+    <div className={classes.root}>
       <Box>
- <div className={classes.root}>
-  
         <h1>Sign up</h1>
         <p>Make the most of your professional life.</p>
         <form onSubmit={doSignup}>
@@ -60,10 +60,9 @@ export function Signup() {
         </form>
         <Seperator>Or</Seperator>
         <div className={classes.register}>
-          Already on LinkedIn? <Link to="/login">Sign in</Link>
+          Already on LinkedIn? <Link to="/authentication/login">Sign in</Link>
         </div>
- </div>
       </Box>
-    </Layout>
+    </div>
   );
 }

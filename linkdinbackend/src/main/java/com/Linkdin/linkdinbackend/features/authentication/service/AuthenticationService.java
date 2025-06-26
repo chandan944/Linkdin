@@ -7,32 +7,18 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import com.Linkdin.linkdinbackend.features.authentication.dto.AuthenticationResponseBody;
-import com.Linkdin.linkdinbackend.features.authentication.model.User;
-import com.Linkdin.linkdinbackend.features.authentication.repository.UserRepository;
+import com.Linkdin.linkdinbackend.features.authentication.model.AuthenticationUser;
+import com.Linkdin.linkdinbackend.features.authentication.repository.AuthenticationUserRepository;
 import com.Linkdin.linkdinbackend.features.authentication.utils.EmailService;
 import com.Linkdin.linkdinbackend.features.authentication.utils.Encoder;
 import com.Linkdin.linkdinbackend.features.authentication.utils.JsonWebToken;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.Linkdin.linkdinbackend.features.authentication.dto.AuthenticationRequestBody;
 
 
-import io.jsonwebtoken.Claims;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
@@ -41,7 +27,7 @@ import jakarta.transaction.Transactional;
 
 public class AuthenticationService {
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
-    private final UserRepository userRepository;
+    private final AuthenticationUserRepository userRepository;
     private final int durationInMinutes = 1;
 
     private final Encoder encoder;
@@ -57,8 +43,8 @@ public class AuthenticationService {
 //    @Value("${oauth.google.client.secret}")
 //    private String googleClientSecret;
 
-    public AuthenticationService(UserRepository userRepository, Encoder encoder, JsonWebToken jsonWebToken,
-            EmailService emailService) {
+    public AuthenticationService(AuthenticationUserRepository userRepository, Encoder encoder, JsonWebToken jsonWebToken,
+                                 EmailService emailService) {
         this.userRepository = userRepository;
         this.encoder = encoder;
         this.jsonWebToken = jsonWebToken;
@@ -76,7 +62,7 @@ public class AuthenticationService {
     }
 
     public void sendEmailVerificationToken(String email) {
-        Optional<User> user = userRepository.findByEmail(email);
+        Optional<AuthenticationUser> user = userRepository.findByEmail(email);
         if (user.isPresent() && !user.get().getEmailVerified()) {
             String emailVerificationToken = generateEmailVerificationToken();
             String hashedToken = encoder.encode(emailVerificationToken);
@@ -99,7 +85,7 @@ public class AuthenticationService {
     }
 
     public void validateEmailVerificationToken(String token, String email) {
-        Optional<User> user = userRepository.findByEmail(email);
+        Optional<AuthenticationUser> user = userRepository.findByEmail(email);
         if (user.isPresent() && encoder.matches(token, user.get().getEmailVerificationToken())
                 && !user.get().getEmailVerificationTokenExpiryDate().isBefore(LocalDateTime.now())) {
             user.get().setEmailVerified(true);
@@ -115,7 +101,7 @@ public class AuthenticationService {
     }
 
     public AuthenticationResponseBody login(AuthenticationRequestBody loginRequestBody) {
-        User user = userRepository.findByEmail(loginRequestBody.email())
+        AuthenticationUser user = userRepository.findByEmail(loginRequestBody.email())
                 .orElseThrow(() -> new IllegalArgumentException("User not found."));
         if (!encoder.matches(loginRequestBody.password(), user.getPassword())) {
             throw new IllegalArgumentException("Password is incorrect.");
@@ -170,7 +156,7 @@ public class AuthenticationService {
 //    }
 
     public AuthenticationResponseBody register(AuthenticationRequestBody registerRequestBody) {
-        User user = userRepository.save(new User(
+        AuthenticationUser user = userRepository.save(new AuthenticationUser(
                 registerRequestBody.email(), encoder.encode(registerRequestBody.password())));
 
         String emailVerificationToken = generateEmailVerificationToken();
@@ -195,14 +181,14 @@ public class AuthenticationService {
         return new AuthenticationResponseBody(authToken, "User registered successfully.");
     }
 
-    public User getUser(String email) {
+    public AuthenticationUser getUser(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found."));
     }
 
     @Transactional
     public void deleteUser(Long userId) {
-        User user = entityManager.find(User.class, userId);
+        AuthenticationUser user = entityManager.find(AuthenticationUser.class, userId);
         if (user != null) {
             entityManager.createNativeQuery("DELETE FROM posts_likes WHERE user_id = :userId")
                     .setParameter("userId", userId)
@@ -212,7 +198,7 @@ public class AuthenticationService {
     }
 
     public void sendPasswordResetToken(String email) {
-        Optional<User> user = userRepository.findByEmail(email);
+        Optional<AuthenticationUser> user = userRepository.findByEmail(email);
         if (user.isPresent()) {
             String passwordResetToken = generateEmailVerificationToken();
             String hashedToken = encoder.encode(passwordResetToken);
@@ -236,7 +222,7 @@ public class AuthenticationService {
     }
 
     public void resetPassword(String email, String newPassword, String token) {
-        Optional<User> user = userRepository.findByEmail(email);
+        Optional<AuthenticationUser> user = userRepository.findByEmail(email);
         if (user.isPresent() && encoder.matches(token, user.get().getPasswordResetToken())
                 && !user.get().getPasswordResetTokenExpiryDate().isBefore(LocalDateTime.now())) {
             user.get().setPasswordResetToken(null);
@@ -252,4 +238,13 @@ public class AuthenticationService {
     }
 
 
+    public AuthenticationUser updateUserProfile(Long id, String firstName, String lastName, String company, String position, String location) {
+        AuthenticationUser user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        if (firstName != null) user.setFirstName(firstName);
+        if (lastName != null) user.setLastName(lastName);
+        if (company != null) user.setCompany(company);
+        if (position != null) user.setPosition(position);
+        if (location != null) user.setLocation(location);
+        return userRepository.save(user);
+    }
 }

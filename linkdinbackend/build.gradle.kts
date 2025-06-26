@@ -32,6 +32,7 @@ dependencies {
 // implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-mail")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
+	implementation("org.springframework.boot:spring-boot-starter-websocket:3.5.0")
 
 //// 🔍 Hibernate Search 6 with Lucene Backend
 //	implementation("org.hibernate.search:hibernate-search-mapper-orm:6.2.6.Final")

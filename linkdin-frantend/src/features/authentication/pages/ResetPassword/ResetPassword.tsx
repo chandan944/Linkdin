@@ -1,19 +1,23 @@
 
 import classes from "./ResetPassword.module.scss";
-import Layout from "../../components/layout/Layout";
-import Box from "../../components/box/Box";
-import { Input } from "../../../../components/input/Input";
-import { Button } from "../../../../components/button/Button";
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Box from "../../components/box/Box";
+
+import { Button } from "../../../../components/button/Button";
+import { Input } from "../../../../components/input/Input";
+
 
 export function ResetPassword() {
   const [emailSent, setEmailSent] = useState(false);
   const [email, setEmail] = useState("");
-
+ 
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+
+
   const sendPasswordResetToken = async (email: string) => {
     try {
       const response = await fetch(
@@ -64,7 +68,7 @@ export function ResetPassword() {
     }
   };
   return (
-    <Layout className={classes.root}>
+    <div className={classes.root}>
       <Box>
         <h1>Reset Password</h1>
 
@@ -136,6 +140,6 @@ export function ResetPassword() {
           </form>
         )}
       </Box>
-    </Layout>
+    </div>
   );
 }

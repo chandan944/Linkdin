@@ -1,17 +1,36 @@
-import { createContext, useContext, useEffect, useState } from "react";
+// 🧠 These are helpful tools from React & React Router
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import Loader from "../../../components/loader/Loader";
+import { request } from "../../../utils/Api";
 
-
-interface User {
+interface AuthenticationResponse {
+  token: string;
+  messgage: string;
+}
+export interface User {
   id: string;
   email: string;
-  name: string;
   emailVerified: boolean;
+  firstName?: string;
+  lastName?: string;
+  company?: string;
+  position?: string;
+  location?: string;
+  profileComplete: boolean;
+  profilePicture?: string;
 }
 
 interface AuthenticationContextType {
   user: User | null;
+  setUser: Dispatch<SetStateAction<User | null>>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   signup: (email: string, password: string) => Promise<void>;
@@ -19,6 +38,7 @@ interface AuthenticationContextType {
 
 const AuthenticationContext = createContext<AuthenticationContextType | null>(null);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuthentication() {
   return useContext(AuthenticationContext)!;
 }
@@ -29,42 +49,54 @@ export function AuthenticationContextProvider() {
   const [isLoading, setIsLoading] = useState(true);
 
   const isOnAuthPage =
-    location.pathname === "/login" ||
-    location.pathname === "/signup" ||
-    location.pathname === "/request-password-reset";
+    location.pathname === "/authentication/login" ||
+    location.pathname === "/authentication/signup" ||
+    location.pathname === "/authentication/request-password-reset";
 
-  const login = async (email: string, password: string) => {
-    const response = await fetch(import.meta.env.VITE_API_URL + "/api/v1/authentication/login", {
+  // const login = async (email: string, password: string) => {
+  //   await request<AuthenticationResponse>({
+  //     endpoint: "/api/v1/authentication/login",
+  //     method: "POST",
+  //     body: JSON.stringify({ email, password }),
+  //     onSuccess: ({ token }) => {
+  //       localStorage.setItem("token", token);
+  //     },
+  //     onFailure: (error) => {
+  //       reject(new Error(error));
+  //     },
+  //   });
+  // };
+
+  const login = (email: string, password: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    request<AuthenticationResponse>({
+      endpoint: "/api/v1/authentication/login",
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify({ email, password }),
+      onSuccess: ({ token }) => {
+        localStorage.setItem("token", token);
+        resolve(); // ✅ Promise resolved
+      },
+      onFailure: (error) => {
+        reject(new Error(error)); // ✅ This works now
+      },
     });
-    if (response.ok) {
-      const { token } = await response.json();
-      localStorage.setItem("token", token);
-    } else {
-      const { message } = await response.json();
-      throw new Error(message);
-    }
-  };
+  });
+};
+
 
   const signup = async (email: string, password: string) => {
-    const response = await fetch(import.meta.env.VITE_API_URL + "/api/v1/authentication/register", {
+    await request<AuthenticationResponse>({
+      endpoint: "/api/v1/authentication/register",
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify({ email, password }),
+      onSuccess: ({ token }) => {
+        localStorage.setItem("token", token);
+      },
+      onFailure: (error) => {
+        throw new Error(error);
+      },
     });
-    if (response.ok) {
-      const { token } = await response.json();
-      localStorage.setItem("token", token);
-    } else {
-      const { message } = await response.json();
-      throw new Error(message);
-    }
   };
 
   const logout = async () => {
@@ -72,42 +104,60 @@ export function AuthenticationContextProvider() {
     setUser(null);
   };
 
-  const fetchUser = async () => {
-    try {
-      const response = await fetch(import.meta.env.VITE_API_URL + "/api/v1/authentication/user", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-      if (!response.ok) {
-        throw new Error("Authentication failed");
-      }
-      const user = await response.json();
-      setUser(user);
-    } catch (e) {
-      console.log(e);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
     if (user) {
       return;
     }
+    setIsLoading(true);
+    const fetchUser = async () => {
+      await request<User>({
+        endpoint: "/api/v1/authentication/user",
+        onSuccess: (data) => setUser(data),
+        onFailure: (error) => {
+          console.log(error);
+        },
+      });
+      setIsLoading(false);
+    };
 
     fetchUser();
   }, [user, location.pathname]);
 
   if (isLoading) {
-    return <Loader/>;
+    return <Loader />;
   }
 
   if (!isLoading && !user && !isOnAuthPage) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/authentication/login" />;
   }
 
-  if (user && user.emailVerified && isOnAuthPage) {
+  if (user && !user.emailVerified && location.pathname !== "/authentication/verify-email") {
+    return <Navigate to="/authentication/verify-email" />;
+  }
+
+  if (user && user.emailVerified && location.pathname == "/authentication/verify-email") {
+    return <Navigate to="/" />;
+  }
+
+  if (
+    user &&
+    user.emailVerified &&
+    !user.profileComplete &&
+    !location.pathname.includes("/authentication/profile")
+  ) {
+    return <Navigate to={`/authentication/profile/${user.id}`} />;
+  }
+
+  if (
+    user &&
+    user.emailVerified &&
+    user.profileComplete &&
+    location.pathname.includes("/authentication/profile")
+  ) {
+    return <Navigate to="/" />;
+  }
+
+  if (user && isOnAuthPage) {
     return <Navigate to="/" />;
   }
 
@@ -118,10 +168,12 @@ export function AuthenticationContextProvider() {
         login,
         logout,
         signup,
+        setUser,
       }}
     >
-      {user && !user.emailVerified ? <Navigate to="/verify-email" /> : null}
       <Outlet />
     </AuthenticationContext.Provider>
   );
 }
+
+
