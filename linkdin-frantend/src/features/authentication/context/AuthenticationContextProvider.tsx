@@ -9,7 +9,7 @@ import {
 } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import Loader from "../../../components/loader/Loader";
-import { request } from "../../../utils/Api";
+import { request } from "../../../utils/api";
 
 interface AuthenticationResponse {
   token: string;

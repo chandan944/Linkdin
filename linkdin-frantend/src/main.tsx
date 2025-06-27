@@ -11,6 +11,8 @@ import { VerifyEmail } from './features/authentication/pages/verifyEmail/VerifyE
 import { ApplicationLayout } from './components/applicationLayout/ApplicationLayout';
 import { AuthenticationLayout } from './features/authentication/components/layout/AuthenticationLayout';
 import { Profile } from './features/authentication/pages/Profile/Profile';
+import { PostPage } from './features/feed/pages/post/PostPage';
+import { Notifications } from './features/feed/pages/notifications/Notification';
 
 
 
@@ -29,6 +31,10 @@ const router = createBrowserRouter([
             index: true, // 🏠 If someone visits just `/`, show the Feed page!
             element: <Feed />,
           },
+            {
+            path: "posts/:id",
+            element: <PostPage />,
+          },
           {
             path: "network", // 👥 LinkedIn's Network tab
             element: <div>Network</div>,
@@ -43,7 +49,7 @@ const router = createBrowserRouter([
           },
           {
             path: "notifications", // 🔔 Notification tab
-            element: <div>Notifications</div>,
+            element: <Notifications/>,
           },
           {
             path: "profile/:id", // 👤 Dynamic profile pages like `/profile/123`

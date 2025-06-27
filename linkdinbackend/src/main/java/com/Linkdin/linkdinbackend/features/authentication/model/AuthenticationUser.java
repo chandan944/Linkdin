@@ -1,5 +1,6 @@
 package com.Linkdin.linkdinbackend.features.authentication.model;
 import com.Linkdin.linkdinbackend.features.feed.model.Post;
+import com.Linkdin.linkdinbackend.features.notifications.model.Notification;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -24,156 +25,163 @@ import java.util.List;
  *
  * 🏷️ JPA Annotation: @Entity(name = "users") → Maps to "users" table in DB
  */
-@Getter
+
 @Entity(name = "users")
 public class AuthenticationUser {
-
-    // 🔑 ID ACCESSOR
-    // 🔑 PRIMARY KEY - Auto-generated unique identifier
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    // 📧 EMAIL FIELD - Must be unique and properly formatted
     @NotNull
     @Email
     @Column(unique = true)
     private String email;
-
-    // ✅ EMAIL VERIFICATION SYSTEM
-    private Boolean emailVerified = false; // Tracks verification status
-    private String emailVerificationToken = null; // Stores hashed verification token
-    private LocalDateTime emailVerificationTokenExpiryDate = null; // Token expiration
-
-    // 🔒 PASSWORD FIELD - Never exposed in JSON responses
+    private Boolean emailVerified = false;
+    private String emailVerificationToken = null;
+    private LocalDateTime emailVerificationTokenExpiryDate = null;
     @JsonIgnore
     private String password;
+    private String passwordResetToken = null;
+    private LocalDateTime passwordResetTokenExpiryDate = null;
 
-    // 🔄 PASSWORD RESET SYSTEM
-    private String passwordResetToken = null; // Stores hashed reset token
-    private LocalDateTime passwordResetTokenExpiryDate = null; // Reset token expiration
-
-    // 👤 PROFILE INFORMATION
     private String firstName = null;
     private String lastName = null;
     private String company = null;
     private String position = null;
     private String location = null;
-    // 🖼️ PROFILE PICTURE ACCESSORS
     private String profilePicture = null;
+    private Boolean profileComplete = false;
 
-    // 📊 PROFILE COMPLETION ACCESSOR
-    // 📊 PROFILE COMPLETION TRACKING
-    private Boolean profileComplete = false; // Automatically calculated
-
-    // 📝 POSTS RELATIONSHIP ACCESSORS
-    // 📝 POST RELATIONSHIP - All posts created by this user
-    @JsonIgnore // Prevent circular references in JSON
+    @JsonIgnore
     @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Post> posts;
 
-    // 🏗️ CONSTRUCTORS
-
-    /**
-     * 🔨 Primary constructor for user creation
-     * @param email - User's unique email address
-     * @param password - Pre-hashed password
-     */
     public AuthenticationUser(String email, String password) {
         this.email = email;
         this.password = password;
     }
 
-    /**
-     * ⚠️ Default constructor required by JPA
-     */
     public AuthenticationUser() {
     }
 
-    // 🔄 PROFILE COMPLETION LOGIC
-
-    /**
-     * 📊 Updates the profileComplete flag based on current fields
-     * Called automatically when relevant fields are updated
-     */
-    public void updateProfileCompletionStatus() {
-        this.profileComplete = (this.firstName != null
-                && this.lastName != null
-                && this.company != null
-                && this.position != null
-                && this.location != null);
+    public Boolean getEmailVerified() {
+        return emailVerified;
     }
-
-    // ⚙️ GETTERS AND SETTERS (with additional behavior where needed)
 
     public void setEmailVerified(Boolean emailVerified) {
         this.emailVerified = emailVerified;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getEmailVerificationToken() {
+        return emailVerificationToken;
     }
 
     public void setEmailVerificationToken(String emailVerificationToken) {
         this.emailVerificationToken = emailVerificationToken;
     }
 
+    public LocalDateTime getEmailVerificationTokenExpiryDate() {
+        return emailVerificationTokenExpiryDate;
+    }
+
     public void setEmailVerificationTokenExpiryDate(LocalDateTime emailVerificationTokenExpiryDate) {
         this.emailVerificationTokenExpiryDate = emailVerificationTokenExpiryDate;
+    }
+
+    public String getPasswordResetToken() {
+        return passwordResetToken;
     }
 
     public void setPasswordResetToken(String passwordResetToken) {
         this.passwordResetToken = passwordResetToken;
     }
 
+    public LocalDateTime getPasswordResetTokenExpiryDate() {
+        return passwordResetTokenExpiryDate;
+    }
+
     public void setPasswordResetTokenExpiryDate(LocalDateTime passwordResetTokenExpiryDate) {
         this.passwordResetTokenExpiryDate = passwordResetTokenExpiryDate;
+    }
+
+    public String getPassword() {
+        return password;
     }
 
     public void setPassword(String password) {
         this.password = password;
     }
 
-    // 🧑🤝🧑 PROFILE FIELD SETTERS (with auto-completion tracking)
+    public String getFirstName() {
+        return firstName;
+    }
 
-    /**
-     * Sets first name AND updates profile completion status
-     */
     public void setFirstName(String firstName) {
         this.firstName = firstName;
         updateProfileCompletionStatus();
     }
 
-    /**
-     * Sets last name AND updates profile completion status
-     */
+    public String getLastName() {
+        return lastName;
+    }
+
     public void setLastName(String lastName) {
         this.lastName = lastName;
         updateProfileCompletionStatus();
     }
 
-    /**
-     * Sets location AND updates profile completion status
-     */
+
+    public String getLocation() {
+        return location;
+    }
+
     public void setLocation(String location) {
         this.location = location;
         updateProfileCompletionStatus();
     }
 
-    /**
-     * Sets position AND updates profile completion status
-     */
+    public String getPosition() {
+        return position;
+    }
+
     public void setPosition(String position) {
         this.position = position;
         updateProfileCompletionStatus();
     }
 
-    /**
-     * Sets company AND updates profile completion status
-     */
+    public String getCompany() {
+        return company;
+    }
+
     public void setCompany(String company) {
         this.company = company;
-        updateProfileCompletionStatus();
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void updateProfileCompletionStatus() {
+        this.profileComplete = (this.firstName != null && this.lastName != null && this.company != null && this.position != null && this.location != null);
+    }
+
+    public Boolean getProfileComplete() {
+        return profileComplete;
+    }
+
+    public List<Post> getPosts() {
+        return posts;
     }
 
     public void setPosts(List<Post> posts) {
         this.posts = posts;
+    }
+
+    public String getProfilePicture() {
+        return profilePicture;
     }
 
     public void setProfilePicture(String profilePicture) {
